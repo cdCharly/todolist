@@ -13,7 +13,7 @@ int callback(void* NotUsed, int col, char** val, char** azColName) {
     // On boucle sur chaque colonne de la ligne en cours
     for (int i = 0; i < col; i++) {
         // Affiche : "NomDeLaColonne = Valeur"
-        std::cout << azColName[i] << " = " << (val[i] ? val[i] : "NULL") << " | ";
+        std::cout << azColName[i] << " " << (val[i] ? val[i] : "NULL") << " | ";
     }
 
     // Un saut de ligne pour séparer chaque tâche (chaque ligne de la BDD)
