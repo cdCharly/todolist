@@ -32,13 +32,13 @@ int callback(void* data, int col, char** val, char** colName) {
 
         auto* taskLabel = new QLabel(taskText);
 
-        // 5. On l'ajoute directement au layout de notre QGroupBox
         layout->addWidget(taskLabel);
         // delete taskLabel;
     }
 
     return 0; // Obligatoire pour SQLite
 }
+
 
 // Nettoie tous les éléments visuels d'un layout
 void clearLayout(QLayout* layout) {
@@ -79,35 +79,33 @@ void addTask(sqlite3* db, QWidget* window) {
         }
 
     }
-
-
-
-
-
-
 }
 
 
 
 // fonction supp
-void delTask(sqlite3* db, char* &dbError) {
+void delTask(sqlite3* db, QWidget* window) {
 
-    std::string taskID;
-    std::cout << "Enter the Task ID : " << std::endl;
-    std::cin >>taskID;
+    bool ok;
+    QString userInput = QInputDialog::getText(window, "Del Task", "Enter task you want to delete: ", QLineEdit::Normal, "", &ok);
 
-    std::string request;
-    const int x = std::stoi(taskID);
 
-    request = "DELETE FROM Tasks WHERE idTask = " + std::to_string(x) + ";";
-    sqlite3_exec(db, request.c_str(), nullptr, nullptr, &dbError);
-    if (dbError != nullptr) {
-        std::cerr << "Error during the process failure " << dbError << std::endl;
+    if (ok && !userInput.isEmpty()) {
+        std::string task = userInput.toStdString();
+        std::string request = "DELETE FROM Tasks WHERE Tasks.task = '"+task+"';";
+        char* dbError = nullptr;
+        sqlite3_exec(db, request.c_str(), nullptr, nullptr, &dbError);
+
+
+        if (dbError != nullptr) {
+            std::cerr << "Error during the process failure " << dbError << std::endl;
+        }
+
+        else {
+            std::cout << "Task delete succes" << std::endl;
+        }
+
     }
-    else {
-        std::cout << "Task deleted succes" << std::endl;
-    }
-
 }
 
 
@@ -162,11 +160,11 @@ int main(int argc, char* argv[]) {
     // boutons
     auto addButton = new QPushButton("Add");
     auto delButton = new QPushButton("Del");
-    auto seeButton = new QPushButton("See");
+    // auto seeButton = new QPushButton("See");
 
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(delButton);
-    buttonLayout->addWidget(seeButton);
+    // buttonLayout->addWidget(seeButton);
 
     hLayout->addLayout(buttonLayout);
     hLayout->addWidget(taskBox);
@@ -182,13 +180,15 @@ int main(int argc, char* argv[]) {
     //[&](){  } fonction anonyme
     QObject::connect(addButton, &QPushButton::clicked, [&]() {
         addTask(db, &window);
-        }
-    );
-
-    QObject::connect(seeButton, &QPushButton::clicked, [&]() {
         seeTasks(db, tLayout);
         }
     );
+
+
+    QObject::connect(delButton, &QPushButton::clicked, [&]() {
+        delTask(db, &window);
+        seeTasks(db, tLayout);
+    });
 
 
     window.show();
