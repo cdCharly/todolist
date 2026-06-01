@@ -206,6 +206,6 @@ int main(int argc, char* argv[]) {
 
     sqlite3_exec(db, "CREATE TABLE Tasks (idTask INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT)", nullptr, nullptr, &dbError);
 
-
+    seeTasks(db, tLayout);
     return app.exec();
 }
