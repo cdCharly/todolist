@@ -167,26 +167,26 @@ int main(int argc, char* argv[]) {
     // style des boutons
     addButton->setStyleSheet(
         "QPushButton {"
-        "   background-color: #E6BF29;" // Couleur de fond (Hexadécimal)
-        "   color: white;"              // Couleur du texte
-        "   border-radius: 5px;"        // Bords légèrement arrondis
-        "   padding: 4px 7px;"         // Marges internes (haut/bas, gauche/droite)
+        "   background-color: #E6BF29;" // couleur fond jaune
+        "   color: white;"              // couleur texte
+        "   border-radius: 5px;"
+        "   padding: 4px 7px;"
         "}"
 
-        "QPushButton:hover {"              // <-- Quand la souris survole
-        "background-color: #4CAF50;"    // Vert un peu plus foncé
+        "QPushButton:hover {"           // survol souris
+        "background-color: #4CAF50;"    // vert
         "}"
     );
 
     delButton->setStyleSheet(
         "QPushButton {"
-        "   background-color: #E6BF29;"
+        "   background-color: #E6BF29;" // jaune
         "   color: white;"
         "   border-radius: 5px;"
         "   padding: 4px 7px;"
         "}"
-        "QPushButton:hover {"              // <-- Quand la souris survole
-        "background-color: #F44336;"    // Vert un peu plus foncé
+        "QPushButton:hover {"
+        "background-color: #F44336;"    // rouge
         "}"
         );
 
