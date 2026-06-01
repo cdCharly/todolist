@@ -1,6 +1,8 @@
 //
 // Created by Charly CATIN--RICO on 27/05/2026.
 //
+
+// structure
 #include <iostream>
 #include <vector>
 #include <string>
@@ -15,6 +17,27 @@
 #include <QGroupBox>
 #include <QInputDialog>
 #include <QLabel>
+#include <QCheckBox>
+
+sqlite3* db = nullptr;  // db for the tasks
+
+// fonction supp
+void delTask(sqlite3* db, std::string task) {
+
+
+    std::string request = "DELETE FROM Tasks WHERE Tasks.task = '"+task+"';";
+    char* dbError = nullptr;
+    sqlite3_exec(db, request.c_str(), nullptr, nullptr, &dbError);
+
+
+    if (dbError != nullptr) {
+        std::cerr << "Error during the process failure " << dbError << std::endl;
+    }
+
+    else {
+        std::cout << "Task delete succes" << std::endl;
+    }
+}
 
 
 // la fonction de callback pour recupere les resultat de la db
@@ -30,13 +53,13 @@ int callback(void* data, int col, char** val, char** colName) {
         auto taskText = QString::fromUtf8(val[1]);
 
 
-        auto* taskLabel = new QLabel(taskText);
+        auto* taskCheck = new QCheckBox(taskText);
 
-        layout->addWidget(taskLabel);
-        // delete taskLabel;
+        layout->addWidget(taskCheck);
+
     }
 
-    return 0; // Obligatoire pour SQLite
+    return 0;
 }
 
 
@@ -83,41 +106,17 @@ void addTask(sqlite3* db, QWidget* window) {
 
 
 
-// fonction supp
-void delTask(sqlite3* db, QWidget* window) {
 
-    bool ok;
-    QString userInput = QInputDialog::getText(window, "Del Task", "Enter task you want to delete: ", QLineEdit::Normal, "", &ok);
-
-
-    if (ok && !userInput.isEmpty()) {
-        std::string task = userInput.toStdString();
-        std::string request = "DELETE FROM Tasks WHERE Tasks.task = '"+task+"';";
-        char* dbError = nullptr;
-        sqlite3_exec(db, request.c_str(), nullptr, nullptr, &dbError);
-
-
-        if (dbError != nullptr) {
-            std::cerr << "Error during the process failure " << dbError << std::endl;
-        }
-
-        else {
-            std::cout << "Task delete succes" << std::endl;
-        }
-
-    }
-}
 
 
 // fonction lire tout
 void seeTasks(sqlite3* db, QVBoxLayout* layout) {
 
-    // 1. On vide l'interface des anciennes tâches
     clearLayout(layout);
 
     char* dbError = nullptr;
 
-    // 2. On passe 'layout' en 4ème argument ! Il arrivera dans le 'void* data' du callback
+    // layout en 4ème arg Il arrivera dans le void* data de callback
     sqlite3_exec(db, "SELECT * FROM Tasks", callback, layout, &dbError);
 
     if (dbError != nullptr) {
@@ -133,7 +132,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> nameList = {};     // liste des taches à réaliser
     std::string userInput;
-    sqlite3* db = nullptr;                                // db for the tasks
+
     char* dbError = nullptr;
 
     // init de l'app
@@ -162,6 +161,9 @@ int main(int argc, char* argv[]) {
     auto delButton = new QPushButton("Del");
     // auto seeButton = new QPushButton("See");
 
+    // check box doivent etre sur le coté d'une task
+    auto checkBox = new QCheckBox("Check");
+
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(delButton);
     // buttonLayout->addWidget(seeButton);
@@ -171,8 +173,6 @@ int main(int argc, char* argv[]) {
     hLayout->setAlignment(Qt::AlignTop);
 
     taskBox->setLayout(tLayout);
-
-
 
 
     // connection des boutons
@@ -186,9 +186,36 @@ int main(int argc, char* argv[]) {
 
 
     QObject::connect(delButton, &QPushButton::clicked, [&]() {
-        delTask(db, &window);
-        seeTasks(db, tLayout);
-    });
+
+    // list des taches qu'on va vouloir supp
+    std::vector<std::string> tasksToDelete;
+
+    // tout les elem du layout
+    for (int i = 0; i < tLayout->count(); ++i) {
+
+        // recuperer le widget avec l'indice
+        QWidget* widget = tLayout->itemAt(i)->widget();
+
+        // verif widget existant
+        if (widget) {
+            // cast sur l'objet qui est la checkbox
+            QCheckBox* checkBox = qobject_cast<QCheckBox*>(widget);
+
+            // verif que la case existe et qu'elle est cochée
+            if (checkBox && checkBox->isChecked()) {
+                // ajout à la liste des taches à supp
+                tasksToDelete.push_back(checkBox->text().toStdString());
+            }
+        }
+    }
+
+    // boucle sur les données à supp
+    for (const std::string& taskName : tasksToDelete) {
+        delTask(db, taskName);
+    }
+
+    seeTasks(db, tLayout);
+});
 
 
     window.show();
