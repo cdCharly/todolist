@@ -164,6 +164,32 @@ int main(int argc, char* argv[]) {
     // check box doivent etre sur le coté d'une task
     auto checkBox = new QCheckBox("Check");
 
+    // style des boutons
+    addButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #E6BF29;" // Couleur de fond (Hexadécimal)
+        "   color: white;"              // Couleur du texte
+        "   border-radius: 5px;"        // Bords légèrement arrondis
+        "   padding: 4px 7px;"         // Marges internes (haut/bas, gauche/droite)
+        "}"
+
+        "QPushButton:hover {"              // <-- Quand la souris survole
+        "background-color: #4CAF50;"    // Vert un peu plus foncé
+        "}"
+    );
+
+    delButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #E6BF29;"
+        "   color: white;"
+        "   border-radius: 5px;"
+        "   padding: 4px 7px;"
+        "}"
+        "QPushButton:hover {"              // <-- Quand la souris survole
+        "background-color: #F44336;"    // Vert un peu plus foncé
+        "}"
+        );
+
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(delButton);
     // buttonLayout->addWidget(seeButton);
