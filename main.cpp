@@ -10,24 +10,29 @@
 
 // pour les fenetres
 #include <QApplication>
-#include <QWidget>
+// #include <QWidget>
 #include <QPushButton>
-#include <QVBoxLayout>
+// #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
 #include <QInputDialog>
 #include <QLabel>
 #include <QCheckBox>
 
+// debug + modif pour only gui app
+#include <QStandardPaths>
+#include <QDir>
+#include <QMessageBox>
+
 sqlite3* db = nullptr;  // db for the tasks
 
 // fonction supp
-void delTask(sqlite3* db, std::string task) {
+void delTask(sqlite3* DB, const std::string &task) {
 
 
     std::string request = "DELETE FROM Tasks WHERE Tasks.task = '"+task+"';";
     char* dbError = nullptr;
-    sqlite3_exec(db, request.c_str(), nullptr, nullptr, &dbError);
+    sqlite3_exec(DB, request.c_str(), nullptr, nullptr, &dbError);
 
 
     if (dbError != nullptr) {
@@ -79,7 +84,7 @@ void clearLayout(QLayout* layout) {
 
 
 // fonction add
-void addTask(sqlite3* db, QWidget* window) {
+void addTask(sqlite3* DB, QWidget* window) {
 
 
     bool ok;
@@ -90,7 +95,7 @@ void addTask(sqlite3* db, QWidget* window) {
         std::string task = userInput.toStdString();
         std::string request = "INSERT INTO Tasks (task) VALUES('" + task + "');";
         char* dbError = nullptr;
-        sqlite3_exec(db, request.c_str(), nullptr, nullptr, &dbError);
+        sqlite3_exec(DB, request.c_str(), nullptr, nullptr, &dbError);
 
 
         if (dbError != nullptr) {
@@ -110,17 +115,17 @@ void addTask(sqlite3* db, QWidget* window) {
 
 
 // fonction lire tout
-void seeTasks(sqlite3* db, QVBoxLayout* layout) {
+void seeTasks(sqlite3* DB, QVBoxLayout* layout) {
 
     clearLayout(layout);
 
     char* dbError = nullptr;
 
     // layout en 4ème arg Il arrivera dans le void* data de callback
-    sqlite3_exec(db, "SELECT * FROM Tasks", callback, layout, &dbError);
+    sqlite3_exec(DB, "SELECT * FROM Tasks", callback, layout, &dbError);
 
     if (dbError != nullptr) {
-        std::cerr << "Error during the process: " << dbError << std::endl;
+        //std::cerr << "Error during the process: " << dbError << std::endl;
         sqlite3_free(dbError);
     }
 }
@@ -161,8 +166,6 @@ int main(int argc, char* argv[]) {
     auto delButton = new QPushButton("Del");
     // auto seeButton = new QPushButton("See");
 
-    // check box doivent etre sur le coté d'une task
-    auto checkBox = new QCheckBox("Check");
 
     // style des boutons
     addButton->setStyleSheet(
@@ -246,19 +249,33 @@ int main(int argc, char* argv[]) {
 
     window.show();
 
-    // database creation
-    int dbInitResult = sqlite3_open("tasks.db", &db);
+    // debug + only gui app requirements
 
-    // check db opening
+    // 1. Définir un chemin autorisé pour macOS
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(appDataPath); // Crée le dossier s'il n'existe pas
+    QString dbPath = appDataPath + "/tasks.db";
+
+    // open database
+    int dbInitResult = sqlite3_open(dbPath.toUtf8().constData(), &db);
+
+    // check opening
     if (dbInitResult != SQLITE_OK ) {
-        std::cerr << "Can't open the database failure " << dbError << std::endl;    // cerr because error message
+        std::cerr << "can't open the database failure: " << sqlite3_errmsg(db) << std::endl;
+
+        QMessageBox::critical(&window, "erreur failure",
+                              QString("impossible d'ouvrir la base de données :\n%1\nChemin : %2 failure")
+                              .arg(sqlite3_errmsg(db))
+                              .arg(dbPath));
+        return -1; // stop si db non ouverte
     }
     else {
-        std::cout << "Database opened succes" << std::endl;
+        std::cout << "Database opened success at " << dbPath.toStdString() << std::endl;
     }
 
-    sqlite3_exec(db, "CREATE TABLE Tasks (idTask INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT)", nullptr, nullptr, &dbError);
+    // creation de la table
+    sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Tasks (idTask INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT)", nullptr, nullptr, &dbError);
 
     seeTasks(db, tLayout);
-    return app.exec();
+    return QApplication::exec();
 }
